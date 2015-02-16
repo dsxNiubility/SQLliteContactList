@@ -8,6 +8,14 @@
 
 #import <UIKit/UIKit.h>
 
+@protocol PersonViewDelegate <NSObject>
+
+- (void)addPersonShouldRelodata;
+
+@end
+
 @interface SXPersonViewController : UITableViewController
+
+@property (nonatomic,weak) id<PersonViewDelegate> delegate;
 
 @end

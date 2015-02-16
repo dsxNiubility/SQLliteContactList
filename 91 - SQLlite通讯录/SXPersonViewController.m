@@ -110,7 +110,7 @@
 - (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
 {
     // 记录选中的companyId
-    self.companyText.tag = [self.companies[row][@"companyId"] intValue];
+    self.companyText.tag = [self.companies[row][@"companyID"] intValue]; // $$$$$
     self.companyText.text = self.companies[row][@"companyName"];
 }
 
@@ -141,6 +141,23 @@
 
 #pragma mark - ******************** 保存信息
 - (IBAction)save {
+    
+    NSInteger companyID = self.companyText.tag;
+    NSNumber *companyNum = nil;
+    if (companyID > 0) {
+        companyNum = @(companyID);
+    }
+     [[SXDBTools sharedDB].queue inDatabase:^(FMDatabase *db) {
+         [db executeUpdate:@"INSERT INTO T_Person (companyId,personName,phoneNo,age) VALUES(?,?,?,?)",companyNum,self.nameText.text,self.phoneText.text,self.ageText.text];
+         
+         NSLog(@"保存数据成功");
+     }];
+    
+    if ([self.delegate respondsToSelector:@selector(addPersonShouldRelodata)]) {
+        [self.delegate addPersonShouldRelodata];
+    }
+    
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 @end
