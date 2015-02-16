@@ -9,7 +9,7 @@
 #import "SXMainViewController.h"
 #import "SXPersonViewController.h"
 #import "SXDBTools.h"
-@interface SXMainViewController ()<PersonViewDelegate>
+@interface SXMainViewController ()<PersonViewDelegate,UISearchBarDelegate>
 
 @property(nonatomic,strong) NSArray *persons;
 
@@ -23,7 +23,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self loadPersons];
+    [self loadPersons:nil];
     
     [self.tableView reloadData];
     
@@ -37,10 +37,24 @@
 //}
 
 #pragma mark - ******************** 加载人物列表信息
-- (void)loadPersons
+- (void)loadPersons:(NSString *)searchText
 {
     [[SXDBTools sharedDB].queue inDatabase:^(FMDatabase *db) {
-     FMResultSet *rs = [db executeQuery:@"SELECT p.personName,c.companyName FROM T_Person p LEFT JOIN T_Company c ON c.companyId = p.companyId ORDER BY p.personName"];
+        
+        // 拼接查询字段 也可以更简单
+        NSString *first = @"SELECT p.personName,c.companyName FROM T_Person p LEFT JOIN T_Company c ON c.companyId = p.companyId";
+        
+        if (searchText.length) {
+             NSString *str = [NSString stringWithFormat:@"'%%%@%%'",searchText];
+            NSString *second = [NSString stringWithFormat:@" WHERE p.personName LIKE %@ OR c.companyName LIKE %@",str,str];
+            first = [first stringByAppendingString:second];
+        }
+       
+        NSString *third = @" ORDER BY p.personName";
+        
+        first = [first stringByAppendingString:third];
+//        NSLog(@"%@",first);
+        FMResultSet *rs = [db executeQuery:first];
         // $$$$$
         NSMutableArray *array = [NSMutableArray array];
         while ([rs next]) {
@@ -92,7 +106,14 @@
 #pragma mark - ******************** 代理方法可以刷新
 - (void)addPersonShouldRelodata
 {
-    [self loadPersons];
+    [self loadPersons:nil];
+    [self.tableView reloadData];
+}
+
+#pragma mark - ******************** searchBar代理方法
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+    [self loadPersons:searchText];
     [self.tableView reloadData];
 }
 @end
